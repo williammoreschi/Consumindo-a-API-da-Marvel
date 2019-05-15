@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import api from '../services/api';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 export default class Home extends Component {
     static navigationOptions = {
         title:"Heroes",
@@ -12,18 +12,30 @@ export default class Home extends Component {
 
     state = {
         data: [],
-        dataInfo:{}
+        dataInfo:{},
+        offset: 0,
+        loading: false,
     }
 
     componentDidMount(){
-        this.loadCharacters()
+        this.loadHeroes()
     }
 
-    loadCharacters = async () => {
-        const response = await api.get();
+    loadHeroes = async (offset=0) => {
+        this.setState({ loading: true });
+        const response = await api.get(`&offset=${offset}`);
         const data = response.data.data.results;
-        const dataInfo = response.data.data;
-        this.setState({ data:[... this.state.data, ... data], dataInfo:dataInfo });
+        const dataInfo = response;
+        this.setState({ data:[... this.state.data, ... data], dataInfo, offset, loading: false });
+     }
+
+    loadMore = () => {
+        const {offset,dataInfo} = this.state;
+        if(this.state.dataInfo.data.data.total <= offset){
+            return;
+        }
+        const offsetNumber = offset + 10;
+        this.loadHeroes(offsetNumber);
     }
 
     renderItem = ({item}) =>{
@@ -37,6 +49,14 @@ export default class Home extends Component {
         )   
     }
 
+    renderFooter = () => {
+    return (
+        <View style={styles.loading}>
+        <ActivityIndicator size="small" color="#e23636" />
+        </View>
+    );
+    }
+
     render() {
     return (
         <View style={styles.container}>
@@ -44,13 +64,16 @@ export default class Home extends Component {
             contentContainerStyle={styles.list}
             data={this.state.data}
             renderItem={this.renderItem}
-            keyExtractor = { (item, index) => index.toString() }
+            keyExtractor = { (item, index) => item.id+'-'+item.name }
+            onEndReached={this.loadMore}
             onEndReachedThreshold={0.1}
+            ListFooterComponent={this.renderFooter}
             >
             </FlatList>
         </View>
     );
-  }
+  };
+
 }
 const styles = StyleSheet.create({
     container:{
@@ -58,7 +81,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#fafafa",
     },
     list:{
-        padding:0
+        padding: 0,
     },
     itemContainer:{
         flexDirection:'row', 
@@ -75,5 +98,9 @@ const styles = StyleSheet.create({
     itemText:{
         marginLeft: 10,
         color:'#504a4a'
+    },
+    loading: {
+        alignSelf: 'center',
+        marginVertical: 20
     }
 })
