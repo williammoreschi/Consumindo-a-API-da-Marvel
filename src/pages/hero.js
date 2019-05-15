@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { StyleSheet, ScrollView, Image, Dimensions, Text } from 'react-native';
-const SCREEN_WIDTH = Dimensions.get('screen').width
+const SCREEN_WIDTH = Dimensions.get('screen').width;
 export default class Hero extends Component {
     static navigationOptions = {
         title: 'Description'
